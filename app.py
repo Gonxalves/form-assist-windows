@@ -5,7 +5,7 @@ app.py - Form Assistant (mode invisible, Windows)
 
 Aucune fenetre visible. Tourne en arriere-plan.
   Ctrl+B  -> capture invisible + analyse + affiche la reponse au centre
-  Ctrl+H  -> cacher la reponse affichee
+  Ctrl+X  -> cacher la reponse affichee
   Ctrl+C  -> quitter (dans le terminal)
 
 Installation :
@@ -207,11 +207,11 @@ class CenterDisplay:
 
 
 # ============================================================
-#  HOTKEY LISTENER (Ctrl+B / Ctrl+H)
+#  HOTKEY LISTENER (Ctrl+B / Ctrl+X)
 # ============================================================
 
 VK_B = 0x42
-VK_H = 0x48
+VK_X = 0x58
 
 
 class HotkeyListener:
@@ -221,7 +221,7 @@ class HotkeyListener:
         self._ctrl       = False
         self._listener: Optional[pynput_kb.Listener] = None
         self._last_b = 0.0
-        self._last_h = 0.0
+        self._last_x = 0.0
 
     def start(self):
         self._listener = pynput_kb.Listener(
@@ -245,14 +245,14 @@ class HotkeyListener:
         char = getattr(key, 'char', None)
 
         is_b = (vk == VK_B) or (char == '\x02')
-        is_h = (vk == VK_H) or (char == '\x08')
+        is_x = (vk == VK_X) or (char == '\x18')
 
         now = time.time()
         if is_b and now - self._last_b > 1.0:
             self._last_b = now
             self._on_capture()
-        if is_h and now - self._last_h > 0.5:
-            self._last_h = now
+        if is_x and now - self._last_x > 0.5:
+            self._last_x = now
             self._on_hide()
 
     def _on_release(self, key):
@@ -316,7 +316,7 @@ def main():
     print(f"  Cle API : ...{api_key[-8:]}")
     print()
     print("  Ctrl+B  -> Capturer l'ecran et obtenir la reponse")
-    print("  Ctrl+H  -> Cacher la reponse")
+    print("  Ctrl+X  -> Cacher la reponse")
     print("  Ctrl+C  -> Quitter (dans ce terminal)")
     print("=" * 55)
     print()

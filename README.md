@@ -7,7 +7,7 @@ App invisible qui tourne en arriere-plan. Quand tu appuies sur **Ctrl+B**, elle 
 | Touche | Action |
 |--------|--------|
 | `Ctrl+B` | Capturer l'ecran + obtenir la reponse |
-| `Ctrl+H` | Cacher la reponse affichee |
+| `Ctrl+X` | Cacher la reponse affichee |
 | `Ctrl+C` | Quitter (dans le terminal) |
 
 ## Installation rapide
@@ -43,4 +43,4 @@ App invisible qui tourne en arriere-plan. Quand tu appuies sur **Ctrl+B**, elle 
 3. Zoome bien sur **UNE seule question** (Ctrl+molette).
 4. Appuie sur **Ctrl+B**.
 5. Apres ~3 secondes, la reponse s'affiche au centre de l'ecran.
-6. `Ctrl+H` pour la cacher immediatement.
+6. `Ctrl+X` pour la cacher immediatement.
