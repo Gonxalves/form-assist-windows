@@ -51,10 +51,9 @@ except ImportError:
 
 API_URL    = "https://api.anthropic.com/v1/messages"
 MODEL      = "claude-sonnet-4-5"
-MAX_TOKENS = 512
+MAX_TOKENS = 1024
 
-DISPLAY_DURATION = 8.0   # secondes d'affichage de la reponse
-FONT_SIZE        = 120   # taille du chiffre/lettre affiche
+DISPLAY_DURATION = 15.0  # secondes d'affichage de la reponse
 
 
 # ============================================================
@@ -100,14 +99,15 @@ def ask_claude(img_b64: str, api_key: str) -> str:
     """
     prompt = (
         "Tu vois un screenshot d'UNE seule question (quiz, formulaire, examen).\n\n"
-        "Identifie la bonne reponse et retourne UNIQUEMENT :\n"
-        "  - La LETTRE de la bonne reponse (A, B, C, D...) si choix multiples avec lettres\n"
-        "  - Le NUMERO de la bonne reponse (1, 2, 3, 4...) si choix multiples numerotes\n"
-        "  - Le TEXTE EXACT de la bonne reponse (max 5 mots) sinon\n\n"
-        "Pas d'explication. Pas de phrase. Juste la reponse.\n"
-        "Exemple de retour valide : B\n"
-        "Exemple de retour valide : 3\n"
-        "Exemple de retour valide : Vrai"
+        "Reponds avec le format LE PLUS COURT POSSIBLE qui repond a la question :\n"
+        "  - Choix multiples avec lettres : juste la LETTRE (ex: B)\n"
+        "  - Choix multiples numerotes : juste le NUMERO (ex: 3)\n"
+        "  - Vrai/Faux : 'Vrai' ou 'Faux'\n"
+        "  - Question courte : le TEXTE EXACT de la reponse\n"
+        "  - Question ouverte / developpement : une phrase ou un court paragraphe\n\n"
+        "Pas d'introduction (\"La reponse est...\"). Pas de justification, sauf si la question\n"
+        "demande explicitement d'expliquer ou de developper.\n"
+        "Reponds directement, en francais."
     )
 
     body = json.dumps({
@@ -151,6 +151,13 @@ def ask_claude(img_b64: str, api_key: str) -> str:
 # ============================================================
 
 class CenterDisplay:
+    """
+    Fenetre centree qui s'adapte automatiquement a la longueur de la reponse :
+      - Reponse courte (<=4 char) : tres gros (120pt)
+      - Phrase courte             : moyen (32pt)
+      - Paragraphe                : compact (20pt) avec retour a la ligne
+    """
+
     def __init__(self, root: tk.Tk):
         self._root = root
         self._win: Optional[tk.Toplevel] = None
@@ -160,24 +167,16 @@ class CenterDisplay:
     def _build(self):
         if self._win is not None:
             return
-        sw = self._root.winfo_screenwidth()
-        sh = self._root.winfo_screenheight()
-
         win = tk.Toplevel(self._root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
-        win.attributes("-alpha", 0.85)
+        win.attributes("-alpha", 0.88)
         win.config(bg="black")
 
-        # Taille adaptee a la lettre/numero (grosse box centree)
-        w, h = 320, 220
-        x = (sw - w) // 2
-        y = (sh - h) // 2
-        win.geometry(f"{w}x{h}+{x}+{y}")
-
         label = tk.Label(
-            win, text="", font=("Segoe UI", FONT_SIZE, "bold"),
-            fg="#00FF88", bg="black"
+            win, text="", font=("Segoe UI", 120, "bold"),
+            fg="#00FF88", bg="black",
+            justify="center", padx=30, pady=20
         )
         label.pack(expand=True, fill="both")
 
@@ -187,12 +186,39 @@ class CenterDisplay:
 
     def show(self, text: str):
         self._build()
-        # Si reponse longue (texte), reduire la police
-        if len(text) > 4:
-            self._label.config(font=("Segoe UI", 36, "bold"))
+        sw = self._root.winfo_screenwidth()
+        sh = self._root.winfo_screenheight()
+
+        n = len(text)
+        if n <= 4:
+            font_size = 120
+            wraplength = 0   # pas de wrap
+        elif n <= 40:
+            font_size = 32
+            wraplength = int(sw * 0.6)
+        elif n <= 200:
+            font_size = 24
+            wraplength = int(sw * 0.7)
         else:
-            self._label.config(font=("Segoe UI", FONT_SIZE, "bold"))
-        self._label.config(text=text)
+            font_size = 20
+            wraplength = int(sw * 0.75)
+
+        self._label.config(
+            text=text,
+            font=("Segoe UI", font_size, "bold"),
+            wraplength=wraplength
+        )
+
+        # Laisse tkinter calculer la taille naturelle puis centre la fenetre
+        self._win.update_idletasks()
+        w = self._label.winfo_reqwidth()
+        h = self._label.winfo_reqheight()
+        w = max(w, 320)
+        h = max(h, 180)
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self._win.geometry(f"{w}x{h}+{x}+{y}")
+
         self._win.deiconify()
         self._win.lift()
 
